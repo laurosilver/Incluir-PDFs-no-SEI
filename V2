@@ -1,0 +1,181 @@
+# INCLUIR PDFs (EXTRATO DE PAG. E SICAF) NO SEI.
+
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+import time
+from datetime import date
+from selenium.webdriver.common.by import By
+#import xlrd
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+cor = {'limp':'\033[m', 'sub':'\033[4m', 'red':'\033[31m', 'blu':'\033[34m', 'gre':'\033[32m', 'pur':'\033[35m' }
+print('')
+print('='*54)
+print('Iniciando nosso robô, aguarde... ')
+print('='*54)
+
+driver = webdriver.Chrome()
+driver.get('https://sei.anatel.gov.br/')
+
+logar = driver.find_element_by_id("txtUsuario")
+logar.send_keys('')  # Indicar o usuário
+# time.sleep(1) #Espera
+senh = driver.find_element_by_id("pwdSenha")
+senha = ('')  # Digitar a senha entre as ''
+# time.sleep(5) #espera a senha
+senh.send_keys(senha)
+logar.send_keys(Keys.RETURN)
+time.sleep(1)  # espera a senha
+driver.maximize_window()
+
+for handle in driver.window_handles:
+    driver.switch_to.window(handle)
+
+driver.close()
+
+for handle in driver.window_handles:
+    driver.switch_to.window(handle)
+
+novo_doc = 1
+np = str(input('Digite os 3 últimos dígitos da NP -> 2019NP000')).strip().upper()
+np1 = str('2019NP000{}'.format(np))
+processo = str(input('Número do Processo ----------------> ')).strip()
+tipo_doc = 1
+
+
+while novo_doc != 0:
+    novo_doc = int(input('Novo documento? {}[1]Sim{}     {}[0]Não{}:   '.format(cor['blu'], cor['limp'], cor['red'], cor['limp'])))
+
+    if novo_doc == 1:
+        mesma_np = int(input('Mesma NP?       {}[1]Sim{}     {}[0]Não{}:   '.format(cor['blu'], cor['limp'], cor['red'], cor['limp'])))
+
+        if mesma_np == 1:
+            np1 == np1
+        else:
+            np = str(input('Nova NP (só os 3 últimos dígitos) -> 2019NP000')).strip().upper()
+            np1 = str('2019NP000{}'.format(np))
+
+        tipo_doc = int(input(('Tipo:   {}[2]Guia{} {}[1]Extrato{} {}[0]Sicaf{}: '.format(cor['pur'], cor['limp'], cor['blu'], cor['limp'], cor['red'], cor['limp']))))
+
+        if tipo_doc == 0:
+            arquivo = (f'"DIGITE AQUI ENDEREÇO DA PASTA DO ARQUIVO/"{np1}.pdf')#C:\Users\guilherme.sato\ANATEL\OneDrive - ANATEL\Relatórios TG\NPS PDF
+        elif tipo_doc == 1:
+            arquivo = (f'"DIGITE AQUI ENDEREÇO DA PASTA DO ARQUIVO/"{np1}.pdf')
+        else:
+            guia = str(input('Digite o nome do arquivo ----------> ')).strip().upper()
+            arquivo = (f'"DIGITE AQUI ENDEREÇO DA PASTA DO ARQUIVO/"{guia}.pdf')
+
+        data_atual = date.today()
+
+        mesmo_proc = int(input(('Mesmo Processo? {}[1]Sim{}     {}[0]Não{}:   '.format(cor['blu'], cor['limp'], cor['red'], cor['limp']))))
+
+        if mesmo_proc == 1:
+            processo == processo
+        else:
+            print('Atribuindo Processo ao Coordenador...')
+            pesq = driver.find_element_by_id('txtPesquisaRapida')
+            pesq.send_keys(processo)
+            pesq.send_keys(Keys.RETURN)
+            time.sleep(1)
+            frame = driver.switch_to.frame("ifrVisualizacao")
+            driver.find_element_by_xpath("//*[@id='divArvoreAcoes']/a[8]").click()
+            element = driver.find_element_by_id('selAtribuicao')  # Atribuir o proc. para o coordenador antes de pedir novo proc.
+            drp = Select(element)  # Dropdown
+            drp.select_by_visible_text('') # Digite o nome do coordenador dentro das ' ', conforme consta na lista de atribuição do SEI
+            driver.find_element_by_id('sbmSalvar').click()
+
+            processo = str(input('Novo Processo ---------------------> ')).strip().upper()
+
+        for handle in driver.window_handles:
+            driver.switch_to.window(handle)
+
+        pesq = driver.find_element_by_id('txtPesquisaRapida')
+        pesq.send_keys(processo)
+        pesq.send_keys(Keys.RETURN)
+
+        time.sleep(1)
+
+        frame = driver.switch_to.frame("ifrVisualizacao")
+        driver.find_element_by_xpath("//*[@id='divArvoreAcoes']/a[1]").click()
+        driver.find_element_by_xpath("//*[@id='tblSeries']/tbody/tr[1]").click()
+
+        element = driver.find_element_by_id('selSerie')
+
+        if tipo_doc == 0:
+            drp = Select(element)  # Dropdown
+            drp.select_by_visible_text('Declaração')
+
+            numero = driver.find_element_by_id("txtNumero")
+            numero.send_keys('SICAF - ', np1)  # np dentro de ()
+        elif tipo_doc == 1:
+            drp = Select(element)  # Dropdown
+            drp.select_by_visible_text('Extrato')
+
+            numero = driver.find_element_by_id("txtNumero")
+            numero.send_keys('de pagamento - ', np1)  # np dentro de ():
+        else:
+            drp = Select(element)  # Dropdown
+            drp.select_by_visible_text('Guia')
+
+            numero = driver.find_element_by_id("txtNumero")
+            numero.send_keys('depósito em garantia - ', np1)  # np dentro de ()
+
+        time.sleep(1.5)
+
+        driver.find_element_by_id('filArquivo').send_keys(arquivo)
+
+        radioElement = driver.find_element_by_id('divOptPublico')
+        radioElement.click()
+
+        radioElement2 = driver.find_element_by_id('lblNato')
+        radioElement2.click()
+
+        data_atual = date.today()  # Variável
+        data_em_texto = data_atual.strftime('%d/%m/%Y')
+
+        data_doc = driver.find_element_by_id('txtDataElaboracao')
+        data_doc.send_keys(data_em_texto)  # Data do documento
+
+        confirmar = driver.find_element_by_id('btnSalvar')
+        confirmar.click()
+
+        try:
+            WebDriverWait(driver, 3).until(EC.alert_is_present(),
+                                           'Timed out waiting for PA creation ' +
+                                           'confirmation popup to appear.')
+
+            alert = driver.switch_to.alert
+            alert.accept()
+            print("alert accepted")
+        except TimeoutException:
+            print("no alert")
+
+        for handle in driver.window_handles:
+            driver.switch_to.window(handle)
+
+        print('='*54)
+
+    else:
+        print('Atribuindo Processo ao Coordenador...')
+        pesq = driver.find_element_by_id('txtPesquisaRapida')
+        pesq.send_keys(processo)
+        pesq.send_keys(Keys.RETURN)
+        time.sleep(1)
+        frame = driver.switch_to.frame("ifrVisualizacao")
+        driver.find_element_by_xpath("//*[@id='divArvoreAcoes']/a[8]").click()
+        element = driver.find_element_by_id('selAtribuicao')  # Atribuir o proc. para o coordenador antes de pedir novo proc.
+        drp = Select(element)  # Dropdown
+        drp.select_by_visible_text('') # Digite o nome do coordenador dentro das ' ', conforme consta na lista de atribuição do SEI
+        driver.find_element_by_id('sbmSalvar').click()
+
+        print('Encerrando...')
+        time.sleep(3)  # Espera
+        driver.close()
+        print('Obrigado!')
+        print('=' * 54)
+        
