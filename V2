@@ -7,7 +7,6 @@ from selenium.webdriver.common.by import By
 import time
 from datetime import date
 from selenium.webdriver.common.by import By
-#import xlrd
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
